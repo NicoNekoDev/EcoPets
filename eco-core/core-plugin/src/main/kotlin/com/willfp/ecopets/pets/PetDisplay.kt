@@ -186,12 +186,15 @@ object PetDisplay : Listener {
     }
 
     private fun remove(player: Player) {
-        trackedEntities[player.uniqueId]?.entity?.remove()
-        trackedEntities.remove(player.uniqueId)
+        remove(player.uniqueId)
     }
 
     private fun remove(uuid: UUID) {
-        trackedEntities[uuid]?.entity?.remove()
+        trackedEntities[uuid]?.entity?.let {
+            plugin.scheduler.runTask(it) {
+                it.remove()
+            }
+        }
         trackedEntities.remove(uuid)
     }
 
@@ -218,8 +221,10 @@ object PetDisplay : Listener {
     @EventHandler
     fun onEntitiesUnload(event: EntitiesUnloadEvent) {
         trackedEntities.entries.forEach {
-            if (event.chunk == it.value.entity.chunk) {
-                remove(it.key)
+            plugin.scheduler.runTask(it.value.entity) {
+                if (event.chunk == it.value.entity.chunk) {
+                    remove(it.key)
+                }
             }
         }
     }
