@@ -97,7 +97,7 @@ object PetDisplay : Listener {
             }
 
             if (location.world != null) {
-                entity.teleport(location)
+                entity.teleportAsync(location)
             }
 
             if (!pet.entityTexture.contains(":") && plugin.configYml.getBool("pet-entity.rotation")) {
