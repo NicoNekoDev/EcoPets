@@ -52,57 +52,60 @@ object PetDisplay : Listener {
         }
 
         val entity = getOrNew(player) ?: return
-        val pet = player.activePet
-        val showHologram = plugin.configYml.getBool("pet-entity.show-hologram")
+        plugin.scheduler.runTask(entity) { // folia issue
+            val pet = player.activePet
+            val showHologram = plugin.configYml.getBool("pet-entity.show-hologram")
 
-        if (pet != null) {
-            if (showHologram) {
-                @Suppress("DEPRECATION")
-                entity.customName = plugin.configYml.getString("pet-entity.name")
-                    .replace("%player%", player.displayName)
-                    .replace("%pet%", pet.name)
-                    .replace("%level%", player.getPetLevel(pet).toString())
-                    .formatEco(player)
-                entity.isCustomNameVisible = true
-            } else {
-                entity.isCustomNameVisible = false
-            }
+            if (pet != null) {
+                if (showHologram) {
+                    @Suppress("DEPRECATION")
+                    entity.customName = plugin.configYml.getString("pet-entity.name")
+                        .replace("%player%", player.displayName)
+                        .replace("%pet%", pet.name)
+                        .replace("%level%", player.getPetLevel(pet).toString())
+                        .formatEco(player)
+                    entity.isCustomNameVisible = true
+                } else {
+                    entity.isCustomNameVisible = false
+                }
 
-            // makes the pet follow the player's sneaking state (so the name can be hidden when sneaking)
-            if (player.isSneaking)
-                entity.isSneaking = true
-            else
-                entity.isSneaking = false
+                // makes the pet follow the player's sneaking state (so the name can be hidden when sneaking)
+                if (player.isSneaking)
+                    entity.isSneaking = true
+                else
+                    entity.isSneaking = false
 
-            val location = getLocation(player, if ((entity is ArmorStand)) 0.0 else 1.0)
-            val offset = plugin.configYml.getDoubleOrNull("pet-entity.location-y-offset") ?: 0.0
-            val bobbing = plugin.configYml.getDoubleOrNull("pet-entity.bobbing-intensity") ?: 0.15
+                val location = getLocation(player, if ((entity is ArmorStand)) 0.0 else 1.0)
+                val offset = plugin.configYml.getDoubleOrNull("pet-entity.location-y-offset") ?: 0.0
+                val bobbing = plugin.configYml.getDoubleOrNull("pet-entity.bobbing-intensity") ?: 0.15
 
-            val yOnPlayerSneaking = when {
-                player.isSneaking -> -0.3
-                else -> 0.0
-            }
+                val yOnPlayerSneaking = when {
+                    player.isSneaking -> -0.3
+                    else -> 0.0
+                }
 
-            // make the pet not be in the player's view when looking up or down
-            val yOnPlayerLookingUp = when {
-                player.pitch < -75 -> -1.5
-                player.pitch > 75 -> 0.5
-                else -> 0.0
-            }
+                // make the pet not be in the player's view when looking up or down
+                val yOnPlayerLookingUp = when {
+                    player.pitch < -75 -> -1.5
+                    player.pitch > 75 -> 0.5
+                    else -> 0.0
+                }
 
-            if (plugin.configYml.getBool("pet-entity.bobbing")) {
-                location.y += yOnPlayerSneaking + yOnPlayerLookingUp + offset + NumberUtils.fastSin(tick / (2 * PI) * 0.5) * bobbing
-            } else {
-                location.y += yOnPlayerSneaking + yOnPlayerLookingUp + offset
-            }
+                if (!pet.entityTexture.contains(":") && plugin.configYml.getBool("pet-entity.rotation")) {
+                    val intensity = plugin.configYml.getDoubleOrNull("pet-entity.rotation-intensity") ?: 20.0
+                    location.yaw = (intensity * tick / (2 * PI)).toFloat()
+                    location.pitch = 0f
+                }
 
-            if (location.world != null) {
-                entity.teleportAsync(location)
-            }
+                if (plugin.configYml.getBool("pet-entity.bobbing")) {
+                    location.y += yOnPlayerSneaking + yOnPlayerLookingUp + offset + NumberUtils.fastSin(tick / (2 * PI) * 0.5) * bobbing
+                } else {
+                    location.y += yOnPlayerSneaking + yOnPlayerLookingUp + offset
+                }
 
-            if (!pet.entityTexture.contains(":") && plugin.configYml.getBool("pet-entity.rotation")) {
-                val intensity = plugin.configYml.getDoubleOrNull("pet-entity.rotation-intensity") ?: 20.0
-                entity.setRotation((intensity * tick / (2 * PI)).toFloat(), 0f)
+                if (location.world != null) {
+                    entity.teleportAsync(location)
+                }
             }
         }
     }
