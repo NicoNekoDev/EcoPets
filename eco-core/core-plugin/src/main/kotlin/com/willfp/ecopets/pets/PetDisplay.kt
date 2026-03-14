@@ -91,16 +91,16 @@ object PetDisplay : Listener {
                     else -> 0.0
                 }
 
-                if (!pet.entityTexture.contains(":") && plugin.configYml.getBool("pet-entity.rotation")) {
-                    val intensity = plugin.configYml.getDoubleOrNull("pet-entity.rotation-intensity") ?: 20.0
-                    location.yaw = (intensity * tick / (2 * PI)).toFloat()
-                    location.pitch = 0f
-                }
-
                 if (plugin.configYml.getBool("pet-entity.bobbing")) {
                     location.y += yOnPlayerSneaking + yOnPlayerLookingUp + offset + NumberUtils.fastSin(tick / (2 * PI) * 0.5) * bobbing
                 } else {
                     location.y += yOnPlayerSneaking + yOnPlayerLookingUp + offset
+                }
+
+                if (!pet.entityTexture.contains(":") && plugin.configYml.getBool("pet-entity.rotation")) {
+                    val intensity = plugin.configYml.getDoubleOrNull("pet-entity.rotation-intensity") ?: 20.0
+                    location.yaw = (intensity * tick / (2 * PI)).toFloat()
+                    location.pitch = 0f
                 }
 
                 if (location.world != null) {
